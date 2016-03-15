@@ -12,3 +12,5 @@ Content/*.obj
 
 Plugins/RealSensePlugin/Binaries/
 Plugins/RealSensePlugin/Intermediate/
+
+RealSenseSandbox.VC.opendb

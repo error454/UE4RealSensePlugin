@@ -156,6 +156,7 @@ class ARealSenseSessionManager : public AActor
 	// Return the current eye direction (max up = -1, max left = -1) 
 	FVector GetEyesDirection() const;
 
+	// Returns other facial properties
 	float GetEyebrowLeft()    const;
 	float GetEyebrowRight()   const;
 	float GetEyeClosedLeft()  const;

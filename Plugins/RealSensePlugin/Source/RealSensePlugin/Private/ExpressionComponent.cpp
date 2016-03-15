@@ -35,14 +35,4 @@ void UExpressionComponent::TickComponent(float DeltaTime, enum ELevelTick TickTy
 	MouthKiss = globalRealSenseSession->GetMouthKiss();
 	MouthSmile = globalRealSenseSession->GetMouthSmile();
 	MouthThunge = globalRealSenseSession->GetMouthThunge();
-	/*
-	inline float GetEyebrowLeft() const { return expression->BrowL; }
-	inline float GetEyebrowRight() const { return expression->BrowR; }
-	inline float GetEyeClosedLeft() const { return expression->EyeL_Closed; }
-	inline float GetEyeClosedRight() const { return expression->EyeR_Closed; }
-	inline float GetMouthOpen() const { return expression->Mouth_Open; }
-	inline float GetMouthKiss() const { return expression->Mouth_Kiss; }
-	inline float GetMouthSmile() const { return expression->Mouth_Smile; }
-	inline float GetMouthThunge() const { return expression->Mouth_Thunge; }
-	*/
 }

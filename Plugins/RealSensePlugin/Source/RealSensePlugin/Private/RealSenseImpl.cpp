@@ -195,7 +195,7 @@ void RealSenseImpl::CameraThread()
 				PXCFaceData::ExpressionsData * expressionData = face->QueryExpressions();
 
 				if (!expressionData) {
-					FString text = "Null but number of faces = ";
+					FString text = "Original face not recognized, but number of faces detected = ";
 					text += FString::FromInt(bgFrame->headCount);
 					GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Red, text);
 				}
@@ -203,97 +203,50 @@ void RealSenseImpl::CameraThread()
 					
 					PXCFaceData::ExpressionsData::FaceExpressionResult score = {};
 					int value = 0;
-					FString output = "EXPRESSION_BROW_RAISER_LEFT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_BROW_RAISER_LEFT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_BROW_RAISER_LEFT:" << score.intensity << std::endl;
 					value = -score.intensity;
-					output += "\nEXPRESSION_BROW_LOWERER_LEFT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_BROW_LOWERER_LEFT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_BROW_LOWERER_LEFT:" << score.intensity << std::endl;
 					value += score.intensity;
 					expression->BrowL = value;
 
-					output += "\nEXPRESSION_BROW_RAISER_RIGHT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_BROW_RAISER_RIGHT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_BROW_RAISER_RIGHT:" << score.intensity << std::endl;
 					value = -score.intensity;
-					output += "\nEXPRESSION_BROW_LOWERER_RIGHT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_BROW_LOWERER_RIGHT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_BROW_LOWERER_RIGHT:" << score.intensity << std::endl;
 					value += score.intensity;
 					expression->BrowR = value;
 
-					output += "\nEXPRESSION_SMILE: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_SMILE, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_SMILE:" << score.intensity << std::endl;
 					expression->Mouth_Smile = score.intensity;
 
-					output += "\nEXPRESSION_KISS: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_KISS, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_KISS:" << score.intensity << std::endl;
 					expression->Mouth_Kiss = score.intensity;
 
-					output += "\nEXPRESSION_MOUTH_OPEN: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_MOUTH_OPEN, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_MOUTH_OPEN:" << score.intensity << std::endl;
 					expression->Mouth_Open = score.intensity;
 
-					output += "\nEXPRESSION_TONGUE_OUT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_TONGUE_OUT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_TONGUE_OUT:" << score.intensity << std::endl;
 					expression->Mouth_Thunge = score.intensity;
 
-					output += "\nEXPRESSION_EYES_CLOSED_LEFT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_CLOSED_LEFT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_EYES_CLOSED_LEFT:" << score.intensity << std::endl;
 					expression->EyeL_Closed = score.intensity;
 
-					output += "\nEXPRESSION_EYES_CLOSED_RIGHT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_CLOSED_RIGHT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_EYES_CLOSED_RIGHT:" << score.intensity << std::endl;
 					expression->EyeR_Closed = score.intensity;
 
-					output += "\nEXPRESSION_EYES_TURN_LEFT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_TURN_LEFT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_EYES_TURN_LEFT:" << score.intensity << std::endl;
 					float eyesX = -score.intensity;
-					output += "\nEXPRESSION_EYES_TURN_RIGHT: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_TURN_RIGHT, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_EYES_TURN_RIGHT:" << score.intensity << std::endl;
 					eyesX += score.intensity;
 
-					output += "\nEXPRESSION_EYES_UP: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_UP, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_EYES_UP:" << score.intensity << std::endl;
 					float eyesY = -score.intensity;
-					output += "\nEXPRESSION_EYES_DOWN: ";
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_DOWN, &score);
-					output += FString::FromInt(score.intensity);
-					//std::cout << "EXPRESSION_EYES_DOWN:" << score.intensity << std::endl;
 					eyesY += score.intensity;
 					expression->EyesDirection = FVector(eyesX/100.0f, eyesY/100.0f, 0.0f);
 					
-					//GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Green, output );
 				}
 
-
-
 			}
-
-
 
 
 		}
