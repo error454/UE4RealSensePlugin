@@ -152,6 +152,18 @@ class ARealSenseSessionManager : public AActor
 
 	// Return the current head rotation
 	FRotator GetHeadRotation() const;
+	
+	// Return the current eye direction (max up = -1, max left = -1) 
+	FVector GetEyesDirection() const;
+
+	float GetEyebrowLeft()    const;
+	float GetEyebrowRight()   const;
+	float GetEyeClosedLeft()  const;
+	float GetEyeClosedRight() const;
+	float GetMouthOpen()      const;
+	float GetMouthKiss()      const;
+	float GetMouthSmile()     const;
+	float GetMouthThunge()    const;
 
 	ARealSenseSessionManager();
 
