@@ -86,6 +86,11 @@ class ARealSenseSessionManager : public AActor
 	// Returns a pointer to the latest frame obtained from the RealSense depth camera.
 	TArray<int32> GetDepthBuffer() const;
 
+	// ImageSegmentationComponent Support
+
+	// Returns a pointer to the latest frame obtained from the RealSense RGB camera.
+	TArray<FSimpleColor> GetBGSBuffer() const;
+
 	// Scan3DComponent Support 
 
 	// Configures the 3D Scanning middleware.
@@ -166,5 +171,6 @@ private:
 
 	TArray<FSimpleColor> ColorBuffer;
 	TArray<int32> DepthBuffer;
+	TArray<FSimpleColor> BGSBuffer;
 	TArray<FSimpleColor> ScanBuffer;
 };

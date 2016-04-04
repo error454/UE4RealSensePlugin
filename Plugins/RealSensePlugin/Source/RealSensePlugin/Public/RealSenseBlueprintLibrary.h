@@ -30,7 +30,7 @@ class URealSenseBlueprintLibrary : public UBlueprintFunctionLibrary
 	// input buffer
 	UFUNCTION(BlueprintCallable, Category = "RealSense Utilities") 
 	static UTexture2D* ColorBufferToTexture(const TArray<FSimpleColor>& Buffer, 
-											UTexture2D* Texture);
+											UTexture2D* Texture, int32 width, int32 height);
 
 	// Fills a Texture2D object with the data from a buffer of integers 
 	// (representing depth values).

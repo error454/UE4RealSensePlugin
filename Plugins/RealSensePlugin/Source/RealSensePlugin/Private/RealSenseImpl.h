@@ -23,6 +23,7 @@ struct RealSenseDataFrame {
 	uint64 number;  // Stores an ID for the frame based on its occurrence in time
 	TArray<uint8> colorImage;  // Container for the camera's raw color stream data
 	TArray<uint16> depthImage;  // Container for the camera's raw depth stream data
+	TArray<uint8> bgsImage;  // Container for the background segmented image provided by the BGS middleware
 	TArray<uint8> scanImage;  // Container for the scan preview image provided by the 3DScan middleware
 
 	int headCount;
@@ -106,6 +107,10 @@ public:
 
 	inline const uint16* GetDepthBuffer() const { return fgFrame->depthImage.GetData(); }
 
+	// Image Segmentation Module Support
+
+	inline const uint8* GetBGSBuffer() const { return fgFrame->bgsImage.GetData(); }
+
 	// 3D Scanning Module Support 
 
 	void ConfigureScanning(EScan3DMode scanningMode, bool bSolidify, bool bTexture);
@@ -148,6 +153,7 @@ private:
 		void operator()(PXCSenseManager* sm) { sm->Release(); }
 		void operator()(PXCCapture* c) { c->Release(); }
 		void operator()(PXCCapture::Device* d) { d->Release(); }
+		void operator()(PXC3DSeg* sc) { ; }
 		void operator()(PXC3DScan* sc) { ; }
 		void operator()(PXCFaceModule* sc) { ; }
 	};
@@ -161,7 +167,7 @@ private:
 	pxcStatus status;  // Status ID used by RSSDK functions
 
 	// SDK Module handles
-
+	std::unique_ptr<PXC3DSeg, RealSenseDeleter> p3DSeg;
 	std::unique_ptr<PXC3DScan, RealSenseDeleter> p3DScan;
 	std::unique_ptr<PXCFaceModule, RealSenseDeleter> pFace;
 
@@ -169,6 +175,7 @@ private:
 	uint32 RealSenseFeatureSet;
 
 	std::atomic_bool bCameraStreamingEnabled;
+	std::atomic_bool bBGSEnabled;
 	std::atomic_bool bScan3DEnabled;
 	std::atomic_bool bFaceEnabled;
 
@@ -193,6 +200,8 @@ private:
 	float colorVerticalFOV;
 	float depthHorizontalFOV;
 	float depthVerticalFOV;
+
+	// Image Segmentation members
 
 	// 3D Scan members
 

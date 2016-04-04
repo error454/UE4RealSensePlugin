@@ -44,6 +44,15 @@ void ARealSenseSessionManager::Tick(float DeltaTime)
 		}
 	}
 
+	if (RealSenseFeatureSet & RealSenseFeature::IMAGE_SEGMENTATION) {
+		// Update the BGSBuffer
+		const uint8 bytesPerPixel = 4;
+		const uint32 BGSImageSize = impl->GetColorImageWidth() * impl->GetColorImageHeight() * bytesPerPixel;
+		FSimpleColor* Dest = BGSBuffer.GetData();
+		const uint8* Src = impl->GetBGSBuffer();
+		FMemory::Memcpy(Dest, Src, BGSImageSize);
+	}
+
 	if (RealSenseFeatureSet & RealSenseFeature::SCAN_3D) {
 		const uint8 bytesPerPixel = 4;
 		const uint32 Scan3DImageSize = impl->GetScan3DImageWidth() * impl->GetScan3DImageHeight();
@@ -155,6 +164,7 @@ void ARealSenseSessionManager::SetColorCameraResolution(EColorResolution resolut
 {
 	impl->SetColorCameraResolution(resolution);
 	ColorBuffer.SetNumUninitialized(impl->GetColorImageWidth() * impl->GetColorImageHeight());
+	BGSBuffer.SetNumUninitialized(impl->GetColorImageWidth() * impl->GetColorImageHeight());
 }
 
 void ARealSenseSessionManager::SetDepthCameraResolution(EDepthResolution resolution) 
@@ -185,6 +195,11 @@ TArray<FSimpleColor> ARealSenseSessionManager::GetColorBuffer() const
 TArray<int32> ARealSenseSessionManager::GetDepthBuffer() const
 { 
 	return DepthBuffer; 
+}
+
+TArray<FSimpleColor> ARealSenseSessionManager::GetBGSBuffer() const
+{
+	return BGSBuffer;
 }
 
 TArray<FSimpleColor> ARealSenseSessionManager::GetScanBuffer() const 

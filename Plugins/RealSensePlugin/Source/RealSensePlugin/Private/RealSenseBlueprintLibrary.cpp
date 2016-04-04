@@ -75,10 +75,10 @@ FString URealSenseBlueprintLibrary::ECameraModelToString(ECameraModel value)
 // Copies the data from the input Buffer into the PlatformData of the Texture object.
 // For convenience, this function returns a pointer to the input Texture that was 
 // modified.
-UTexture2D* URealSenseBlueprintLibrary::ColorBufferToTexture(const TArray<FSimpleColor>& Buffer, UTexture2D* Texture) 
+UTexture2D* URealSenseBlueprintLibrary::ColorBufferToTexture(const TArray<FSimpleColor>& Buffer, UTexture2D* Texture, int32 width = 0, int32 height = 0)
 {
 	if (Texture == nullptr) {
-		return nullptr;
+		Texture = UTexture2D::CreateTransient(width, height, EPixelFormat::PF_B8G8R8A8);
 	}
 
 	// Test that the Buffer and Texture have the same capacity

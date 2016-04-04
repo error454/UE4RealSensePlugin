@@ -27,16 +27,16 @@ RealSenseImpl::RealSenseImpl()
 			break;
 
 		PXCSession::ImplDesc desc2 = {};
-		if (session->QueryImpl(&desc1, m, &desc2) != PXC_STATUS_NO_ERROR) 
+		if (session->QueryImpl(&desc1, m, &desc2) != PXC_STATUS_NO_ERROR)
 			break;
 
 		PXCCapture* tmp;
-		if (session->CreateImpl<PXCCapture>(&desc2, &tmp) != PXC_STATUS_NO_ERROR) 
+		if (session->CreateImpl<PXCCapture>(&desc2, &tmp) != PXC_STATUS_NO_ERROR)
 			continue;
 		capture.reset(tmp);
 
 		for (int j = 0; ; j++) {
-			if (capture->QueryDeviceInfo(j, &deviceInfo) != PXC_STATUS_NO_ERROR) 
+			if (capture->QueryDeviceInfo(j, &deviceInfo) != PXC_STATUS_NO_ERROR)
 				break;
 
 			if ((deviceInfo.model == PXCCapture::DeviceModel::DEVICE_MODEL_F200) ||
@@ -53,6 +53,7 @@ RealSenseImpl::RealSenseImpl()
 
 	RealSenseFeatureSet = 0;
 	bCameraStreamingEnabled = false;
+	bBGSEnabled = false;
 	bScan3DEnabled = false;
 	bFaceEnabled = false;
 
@@ -70,7 +71,7 @@ RealSenseImpl::RealSenseImpl()
 		colorVerticalFOV = 0.0f;
 		depthHorizontalFOV = 0.0f;
 		depthVerticalFOV = 0.0f;
-	} 
+	}
 	else {
 		PXCPointF32 cfov = device->QueryColorFieldOfView();
 		colorHorizontalFOV = cfov.x;
@@ -139,6 +140,14 @@ void RealSenseImpl::CameraThread()
 
 			CopyColorImageToBuffer(sample->color, bgFrame->colorImage, colorResolution.width, colorResolution.height);
 			CopyDepthImageToBuffer(sample->depth, bgFrame->depthImage, depthResolution.width, depthResolution.height);
+		}
+
+		if (bBGSEnabled) {
+			PXCImage* bgsImage = p3DSeg->AcquireSegmentedImage();
+			if (bgsImage) {
+				CopyColorImageToBuffer(bgsImage, bgFrame->bgsImage, colorResolution.width, colorResolution.height);
+				bgsImage->Release();
+			}
 		}
 
 		if (bScan3DEnabled) {
@@ -230,6 +239,10 @@ void RealSenseImpl::SwapFrames()
 
 void RealSenseImpl::EnableMiddleware()
 {
+	if (bBGSEnabled) {
+		senseManager->Enable3DSeg();
+		p3DSeg = std::unique_ptr<PXC3DSeg, RealSenseDeleter>(senseManager->Query3DSeg());
+	}
 	if (bScan3DEnabled) {
 		senseManager->Enable3DScan();
 		p3DScan = std::unique_ptr<PXC3DScan, RealSenseDeleter>(senseManager->Query3DScan());
@@ -246,6 +259,9 @@ void RealSenseImpl::EnableFeature(RealSenseFeature feature)
 	case RealSenseFeature::CAMERA_STREAMING:
 		bCameraStreamingEnabled = true;
 		return;
+	case RealSenseFeature::IMAGE_SEGMENTATION:
+		bBGSEnabled = true;
+		return;
 	case RealSenseFeature::SCAN_3D:
 		bScan3DEnabled = true;
 		return;
@@ -260,6 +276,9 @@ void RealSenseImpl::DisableFeature(RealSenseFeature feature)
 	switch (feature) {
 	case RealSenseFeature::CAMERA_STREAMING:
 		bCameraStreamingEnabled = false;
+		return;
+	case RealSenseFeature::IMAGE_SEGMENTATION:
+		bBGSEnabled = false;
 		return;
 	case RealSenseFeature::SCAN_3D:
 		bScan3DEnabled = false;
@@ -313,6 +332,12 @@ void RealSenseImpl::SetColorCameraResolution(EColorResolution resolution)
 	bgFrame->colorImage.SetNumZeroed(colorImageSize);
 	midFrame->colorImage.SetNumZeroed(colorImageSize);
 	fgFrame->colorImage.SetNumZeroed(colorImageSize);
+
+	if (bBGSEnabled) {
+		bgFrame->bgsImage.SetNumZeroed(colorImageSize);
+		midFrame->bgsImage.SetNumZeroed(colorImageSize);
+		fgFrame->bgsImage.SetNumZeroed(colorImageSize);
+	}
 }
 
 // Enables the depth camera stream of the SenseManager using the specified resolution
