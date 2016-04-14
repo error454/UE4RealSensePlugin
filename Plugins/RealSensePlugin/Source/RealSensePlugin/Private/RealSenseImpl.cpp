@@ -61,6 +61,8 @@ RealSenseImpl::RealSenseImpl()
 	fgFrame = std::unique_ptr<RealSenseDataFrame>(new RealSenseDataFrame());
 	midFrame = std::unique_ptr<RealSenseDataFrame>(new RealSenseDataFrame());
 	bgFrame = std::unique_ptr<RealSenseDataFrame>(new RealSenseDataFrame());
+	expression = std::unique_ptr<RealSenseExpression>(new RealSenseExpression());
+
 
 	colorResolution = {};
 	depthResolution = {};
@@ -186,7 +188,67 @@ void RealSenseImpl::CameraThread()
 					poseData->QueryPoseAngles(&headRotation);
 					bgFrame->headRotation = FRotator(headRotation.pitch, headRotation.yaw, headRotation.roll);
 				}
+
+
+
+				// Retrieve face expression data
+				PXCFaceData::ExpressionsData * expressionData = face->QueryExpressions();
+
+				if (!expressionData) {
+					FString text = "Original face not recognized, but number of faces detected = ";
+					text += FString::FromInt(bgFrame->headCount);
+					GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Red, text);
+				}
+				else {
+					
+					PXCFaceData::ExpressionsData::FaceExpressionResult score = {};
+					int value = 0;
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_BROW_RAISER_LEFT, &score);
+					value = -score.intensity;
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_BROW_LOWERER_LEFT, &score);
+					value += score.intensity;
+					expression->BrowL = value;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_BROW_RAISER_RIGHT, &score);
+					value = -score.intensity;
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_BROW_LOWERER_RIGHT, &score);
+					value += score.intensity;
+					expression->BrowR = value;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_SMILE, &score);
+					expression->Mouth_Smile = score.intensity;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_KISS, &score);
+					expression->Mouth_Kiss = score.intensity;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_MOUTH_OPEN, &score);
+					expression->Mouth_Open = score.intensity;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_TONGUE_OUT, &score);
+					expression->Mouth_Thunge = score.intensity;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_CLOSED_LEFT, &score);
+					expression->EyeL_Closed = score.intensity;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_CLOSED_RIGHT, &score);
+					expression->EyeR_Closed = score.intensity;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_TURN_LEFT, &score);
+					float eyesX = -score.intensity;
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_TURN_RIGHT, &score);
+					eyesX += score.intensity;
+
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_UP, &score);
+					float eyesY = -score.intensity;
+					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_DOWN, &score);
+					eyesY += score.intensity;
+					expression->EyesDirection = FVector(eyesX/100.0f, eyesY/100.0f, 0.0f);
+					
+				}
+
 			}
+
+
 		}
 		
 		senseManager->ReleaseFrame();
@@ -237,6 +299,33 @@ void RealSenseImpl::EnableMiddleware()
 	if (bFaceEnabled) {
 		senseManager->EnableFace();
 		pFace = std::unique_ptr<PXCFaceModule, RealSenseDeleter>(senseManager->QueryFace());
+		faceConfig = pFace->CreateActiveConfiguration();
+		// Configure for 3D face tracking
+		faceConfig->SetTrackingMode(PXCFaceConfiguration::TrackingModeType::FACE_MODE_COLOR_PLUS_DEPTH);
+
+		// Known issue: Pose isEnabled must be set to false for R200 face tracking to work correctly
+		//faceConfig->pose.isEnabled = false;
+
+		// Track faces based on their appearance in the scene
+		faceConfig->strategy = (PXCFaceConfiguration::TrackingStrategyType::STRATEGY_APPEARANCE_TIME);
+
+		// Set the module to track four faces in this example
+		faceConfig->detection.maxTrackedFaces = 4;
+
+		// Enable alert monitoring and subscribe to alert event hander
+		faceConfig->EnableAllAlerts();
+		//faceConfig->SubscribeAlert(FaceAlertHandler);
+
+		PXCFaceConfiguration::ExpressionsConfiguration *expc;
+		expc = faceConfig->QueryExpressions();
+		if (expc){
+			expc->Enable();
+			expc->EnableAllExpressions();
+		}
+		// Apply changes
+		faceConfig->ApplyChanges();
+
+		faceConfig->Release();
 	}
 }
 

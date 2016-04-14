@@ -32,6 +32,63 @@ struct RealSenseDataFrame {
 	RealSenseDataFrame() : number(0), headCount(0) {}
 };
 
+struct RealSenseExpression {
+	
+	int BrowL;
+	int BrowR;
+	int Mouth_Smile;
+	int Mouth_Kiss;
+	int Mouth_Open;
+	int Mouth_Thunge;
+	int EyeL_Closed;
+	int EyeR_Closed;
+	FVector EyesDirection;
+	/*
+	FString output = "EXPRESSION_BROW_RAISER_LEFT: ";
+	
+	output += "\nEXPRESSION_BROW_RAISER_RIGHT: ";
+	
+	output += "\nEXPRESSION_BROW_LOWERER_LEFT: ";
+	
+	output += "\nEXPRESSION_BROW_RAISER_LEFT: ";
+	
+	output += "\nEXPRESSION_SMILE: ";
+	
+	output += "\nEXPRESSION_KISS: ";
+	
+	output += "\nEXPRESSION_MOUTH_OPEN: ";
+	
+	output += "\nEXPRESSION_TONGUE_OUT: ";
+	
+	output += "\nEXPRESSION_EYES_CLOSED_LEFT: ";
+	
+	output += "\nEXPRESSION_EYES_CLOSED_RIGHT: ";
+	
+	output += "\nEXPRESSION_EYES_TURN_LEFT: ";
+	
+	output += "\nEXPRESSION_EYES_TURN_RIGHT: ";
+	
+	output += "\nEXPRESSION_EYES_UP: ";
+	
+	output += "\nEXPRESSION_EYES_DOWN: ";
+	
+	*/
+
+	RealSenseExpression() : 
+	BrowL(0),
+	BrowR(0),
+	Mouth_Smile(0),
+	Mouth_Kiss(0),
+	Mouth_Open(0),
+	Mouth_Thunge(0),
+	EyeL_Closed(0),
+	EyeR_Closed(0)
+	{
+		EyesDirection = FVector(0, 0, 0);
+	}
+
+};
+
 // Implements the functionality of the Intel(R) RealSense(TM) SDK and associated
 // middleware modules as used by the RealSenseSessionManager Actor class.
 //
@@ -140,6 +197,17 @@ public:
 
 	inline FRotator GetHeadRotation() const { return bgFrame->headRotation; }
 
+	inline FVector GetEyesDirection() const { return expression->EyesDirection; }
+	inline float GetEyebrowLeft() const { return expression->BrowL; }
+	inline float GetEyebrowRight() const { return expression->BrowR; }
+	inline float GetEyeClosedLeft() const { return expression->EyeL_Closed; }
+	inline float GetEyeClosedRight() const { return expression->EyeR_Closed; }
+	inline float GetMouthOpen() const { return expression->Mouth_Open; }
+	inline float GetMouthKiss() const { return expression->Mouth_Kiss; }
+	inline float GetMouthSmile() const { return expression->Mouth_Smile; }
+	inline float GetMouthThunge() const { return expression->Mouth_Thunge; }
+
+
 private:
 	// Core SDK handles
 
@@ -180,6 +248,7 @@ private:
 	std::unique_ptr<RealSenseDataFrame> fgFrame;
 	std::unique_ptr<RealSenseDataFrame> midFrame;
 	std::unique_ptr<RealSenseDataFrame> bgFrame;
+	std::unique_ptr<RealSenseExpression> expression;
 
 	// Mutex for locking access to the midFrame
 	std::mutex midFrameMutex;

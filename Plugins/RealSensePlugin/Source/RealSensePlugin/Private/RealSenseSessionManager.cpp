@@ -246,3 +246,17 @@ FRotator ARealSenseSessionManager::GetHeadRotation() const
 {
 	return impl->GetHeadRotation();
 }
+
+FVector ARealSenseSessionManager::GetEyesDirection() const
+{
+	return impl->GetEyesDirection();
+}
+
+float ARealSenseSessionManager::GetEyebrowLeft()    const { return impl->GetEyebrowLeft(); }
+float ARealSenseSessionManager::GetEyebrowRight()   const { return impl->GetEyebrowRight(); }
+float ARealSenseSessionManager::GetEyeClosedLeft()  const { return impl->GetEyeClosedLeft(); }
+float ARealSenseSessionManager::GetEyeClosedRight() const { return impl->GetEyeClosedRight(); }
+float ARealSenseSessionManager::GetMouthOpen()      const { return impl->GetMouthOpen(); }
+float ARealSenseSessionManager::GetMouthKiss()      const { return impl->GetMouthKiss(); }
+float ARealSenseSessionManager::GetMouthSmile()     const { return impl->GetMouthSmile(); }
+float ARealSenseSessionManager::GetMouthThunge()    const { return impl->GetMouthThunge(); }

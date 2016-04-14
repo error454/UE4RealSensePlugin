@@ -1,4 +1,8 @@
-### <b>RealSense Plugin for Unreal Engine 4</b>
+### <b>RealSense Plugin for Unreal Engine 4 (facial expression fork)</b>
+
+#### Changes in this fork
+This fork is a modification to the HeadTracking project to test how hard it is to get facial expression data from the RealSense SDK. It is a quick and dirty hack on the SessionManager and the Component files, and probably will not recemble the final plugin at all.
+One interesting note is that the function flag for head tracing is the same as with expression tracking, this was a bit confusing as the enum used in the plugin did not really match the module name of the RealSense SDK.
 
 #### Overview
 The RealSense Plugin provides support for the Intel RealSense SDK to Unreal Engine 4 developers by exposing features of the SDK to the Blueprints Visual Scripting System. 
