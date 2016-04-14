@@ -166,6 +166,12 @@ class ARealSenseSessionManager : public AActor
 	float GetMouthSmile()     const;
 	float GetMouthThunge()    const;
 
+	// Person Tracking properties
+	TArray<FSkeletonData> GetSkeletonData() const;
+
+	// Hand Tracking Properties
+	TQueue<FHandData>* GetHandData() const;
+
 	ARealSenseSessionManager();
 
 	virtual void BeginPlay() override;

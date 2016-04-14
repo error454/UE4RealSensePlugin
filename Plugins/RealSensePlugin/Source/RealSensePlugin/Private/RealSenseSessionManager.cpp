@@ -260,3 +260,13 @@ float ARealSenseSessionManager::GetMouthOpen()      const { return impl->GetMout
 float ARealSenseSessionManager::GetMouthKiss()      const { return impl->GetMouthKiss(); }
 float ARealSenseSessionManager::GetMouthSmile()     const { return impl->GetMouthSmile(); }
 float ARealSenseSessionManager::GetMouthThunge()    const { return impl->GetMouthThunge(); }
+
+TArray<FSkeletonData> ARealSenseSessionManager::GetSkeletonData() const
+{
+	return impl->GetSkeletonData();
+}
+
+TQueue<FHandData>* ARealSenseSessionManager::GetHandData() const
+{
+	return impl->GetHandData();
+}

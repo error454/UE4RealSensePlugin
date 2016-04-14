@@ -9,6 +9,12 @@
 #include "RealSenseTypes.h"
 #include "RealSenseUtils.h"
 #include "RealSenseBlueprintLibrary.h"
+#include "PXCPersonTrackingData.h"
+#include "PXCPersonTrackingModule.h"
+#include "pxcpersontrackingconfiguration.h"
+#include "pxchandconfiguration.h"
+#include "pxchanddata.h"
+//#include "PersonTrackingUtilities.h"
 #include "PXCSenseManager.h"
 
 // Stores all relevant data computed from one frame of RealSense camera data.
@@ -28,7 +34,13 @@ struct RealSenseDataFrame {
 	int headCount;
 	FVector headPosition;
 	FRotator headRotation;
+	
+	// The current frames worth of skeletal data.... does this need to be thread safe??
+	TArray<FSkeletonData> CurrentSkeletonData;
 
+	TQueue<FHandData, EQueueMode::Spsc> CurrentHandData;
+
+	FString GestureName;
 	RealSenseDataFrame() : number(0), headCount(0) {}
 };
 
@@ -94,7 +106,7 @@ struct RealSenseExpression {
 //
 // NOTE: Some function declarations do not have a function comment because the 
 // comment is written in RealSenseSessionManager.h. 
-class RealSenseImpl {
+class RealSenseImpl : public PXCHandConfiguration::GestureHandler{
 public:
 	// Creates a new RealSense Session and queries physical device information.
 	RealSenseImpl();
@@ -207,6 +219,9 @@ public:
 	inline float GetMouthSmile() const { return expression->Mouth_Smile; }
 	inline float GetMouthThunge() const { return expression->Mouth_Thunge; }
 
+	// Person Tracking Support
+	inline TArray<FSkeletonData> GetSkeletonData() const { return bgFrame->CurrentSkeletonData; }
+	inline TQueue<FHandData>* GetHandData() const { return &bgFrame->CurrentHandData; }
 
 private:
 	// Core SDK handles
@@ -232,13 +247,23 @@ private:
 
 	std::unique_ptr<PXC3DScan, RealSenseDeleter> p3DScan;
 	std::unique_ptr<PXCFaceModule, RealSenseDeleter> pFace;
-
+	PXCPersonTrackingModule* pPerson;
+	
 	// Feature set constructed as the logical OR of RealSenseFeatures
 	uint32 RealSenseFeatureSet;
+
+	// Initialization variables to allow multiple components to register
+	std::atomic_bool bCameraStreamingInitialized;
+	std::atomic_bool bScan3DInitialized;
+	std::atomic_bool bFaceInitialized;
+	std::atomic_bool bPersonInitialized;
+	std::atomic_bool bHandInitialized;
 
 	std::atomic_bool bCameraStreamingEnabled;
 	std::atomic_bool bScan3DEnabled;
 	std::atomic_bool bFaceEnabled;
+	std::atomic_bool bPersonEnabled;
+	std::atomic_bool bHandEnabled;
 
 	// Camera processing members
 
@@ -280,6 +305,17 @@ private:
 
 	PXCFaceConfiguration* faceConfig;
 	PXCFaceData* faceData;
+
+	// Person Module members
+	PXCPersonTrackingConfiguration* personConfig;
+	PXCPersonTrackingConfiguration::SkeletonJointsConfiguration* skeletonConfig;
+
+	// Hand Module
+	PXCHandModule *handModule;
+	PXCHandConfiguration* handConfig;
+	PXCHandData* handData;
+
+	virtual void PXCAPI OnFiredGesture(const PXCHandData::GestureData & gestureData) override;
 
 	// Helper Functions
 

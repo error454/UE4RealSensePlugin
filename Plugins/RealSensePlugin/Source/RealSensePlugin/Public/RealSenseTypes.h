@@ -7,6 +7,8 @@ enum RealSenseFeature : uint8 {
 	CAMERA_STREAMING = 0x1,
 	SCAN_3D = 0x2,
 	HEAD_TRACKING = 0x4,
+	PERSON_TRACKING = 0X8,
+	HAND_TRACKING = 0X10,
 };
 
 // Resolutions supported by the RealSense RGB camera
@@ -101,4 +103,58 @@ struct FStreamResolution
 	float fps;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ERealSensePixelFormat format;
+};
+
+// Used to pass joint types back to UE4 in a blueprint readable way
+UENUM(BlueprintType)
+enum class EJointType : uint8
+{
+	JOINT_ANKLE_LEFT,
+	JOINT_ANKLE_RIGHT,
+	JOINT_ELBOW_LEFT,
+	JOINT_ELBOW_RIGHT,
+	JOINT_FOOT_LEFT,
+	JOINT_FOOT_RIGHT,
+	JOINT_HAND_LEFT,
+	JOINT_HAND_RIGHT,
+	JOINT_HAND_TIP_LEFT,
+	JOINT_HAND_TIP_RIGHT,
+	JOINT_HEAD,
+	JOINT_HIP_LEFT,
+	JOINT_HIP_RIGHT,
+	JOINT_KNEE_LEFT,
+	JOINT_KNEE_RIGHT,
+	JOINT_NECK,
+	JOINT_SHOULDER_LEFT,
+	JOINT_SHOULDER_RIGHT,	
+	JOINT_SPINE_BASE,
+	JOINT_SPINE_MID,
+	JOINT_SPINE_SHOULDER,
+	JOINT_THUMB_LEFT,
+	JOINT_THUMB_RIGHT,  
+	JOINT_WRIST_LEFT,
+	JOINT_WRIST_RIGHT
+};
+
+// Used to pass skeletal data back to UE4
+USTRUCT(Blueprintable)
+struct FSkeletonData
+{
+	GENERATED_USTRUCT_BODY()
+
+ 	UPROPERTY()
+ 	FVector Location;
+
+ 	UPROPERTY()
+ 	EJointType JointType;
+};
+
+// Used to pass hand data
+USTRUCT(Blueprintable)
+struct FHandData
+{
+	GENERATED_USTRUCT_BODY()
+
+ 	UPROPERTY()
+ 	FString Name;
 };

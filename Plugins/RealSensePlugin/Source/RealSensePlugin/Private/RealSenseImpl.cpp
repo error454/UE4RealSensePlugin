@@ -51,10 +51,17 @@ RealSenseImpl::RealSenseImpl()
 	p3DScan = std::unique_ptr<PXC3DScan, RealSenseDeleter>(nullptr);
 	pFace = std::unique_ptr<PXCFaceModule, RealSenseDeleter>(nullptr);
 
+	bCameraStreamingInitialized = false;
+	bScan3DInitialized = false;
+	bFaceInitialized = false;
+	bPersonInitialized = false;
+	bHandInitialized = false;
+
 	RealSenseFeatureSet = 0;
 	bCameraStreamingEnabled = false;
 	bScan3DEnabled = false;
 	bFaceEnabled = false;
+	bHandEnabled = false;
 
 	bCameraThreadRunning = false;
 
@@ -186,7 +193,7 @@ void RealSenseImpl::CameraThread()
 
 					PXCFaceData::PoseEulerAngles headRotation = {};
 					poseData->QueryPoseAngles(&headRotation);
-					bgFrame->headRotation = FRotator(headRotation.pitch, headRotation.yaw, headRotation.roll);
+					bgFrame->headRotation = FRotator(headRotation.roll, headRotation.yaw, -headRotation.pitch);
 				}
 
 
@@ -243,12 +250,168 @@ void RealSenseImpl::CameraThread()
 					expressionData->QueryExpression(PXCFaceData::ExpressionsData::EXPRESSION_EYES_DOWN, &score);
 					eyesY += score.intensity;
 					expression->EyesDirection = FVector(eyesX/100.0f, eyesY/100.0f, 0.0f);
-					
 				}
-
 			}
+		}
 
+		if (bPersonEnabled)
+		{
+			PXCPersonTrackingData *ptd = pPerson->QueryOutput();
+			const int nPersons = ptd->QueryNumberOfPeople();
 
+			UE_LOG(LogTemp, Warning, TEXT("People: %d"), nPersons);
+
+			if (PXCPersonTrackingData::Person* person = pPerson->QueryOutput()->QueryPersonData(PXCPersonTrackingData::ACCESS_ORDER_BY_ID, 0))
+			{
+				PXCPersonTrackingData::PersonTracking* personTracking;
+				personTracking = person->QueryTracking();
+
+				if (PXCPersonTrackingData::PersonJoints *personJoint = person->QuerySkeletonJoints())
+				{
+					int njoints = personJoint->QueryNumJoints();
+					UE_LOG(LogTemp, Warning, TEXT("Joints: %d"), njoints);
+					PXCPersonTrackingData::PersonJoints::SkeletonPoint* points = new PXCPersonTrackingData::PersonJoints::SkeletonPoint[njoints];
+					personJoint->QueryJoints(points);
+
+					// Stuff point data into bgframe array
+					bgFrame->CurrentSkeletonData.Empty();
+					for (int32 i = 0; i < njoints; i++)
+					{
+						PXCPersonTrackingData::PersonJoints::SkeletonPoint j = points[i];
+						
+						FSkeletonData JointData;
+						switch (j.jointType)
+						{
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_ANKLE_LEFT:
+								JointData.JointType = EJointType::JOINT_ANKLE_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_ANKLE_RIGHT:
+								JointData.JointType = EJointType::JOINT_ANKLE_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_ELBOW_LEFT:
+								JointData.JointType = EJointType::JOINT_ELBOW_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_ELBOW_RIGHT:
+								JointData.JointType = EJointType::JOINT_ELBOW_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_FOOT_LEFT:
+								JointData.JointType = EJointType::JOINT_FOOT_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_FOOT_RIGHT:
+								JointData.JointType = EJointType::JOINT_FOOT_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_HAND_LEFT:
+								JointData.JointType = EJointType::JOINT_HAND_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_HAND_RIGHT:
+								JointData.JointType = EJointType::JOINT_HAND_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_HAND_TIP_LEFT:
+								JointData.JointType = EJointType::JOINT_HAND_TIP_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_HAND_TIP_RIGHT:
+								JointData.JointType = EJointType::JOINT_HAND_TIP_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_HEAD:
+								JointData.JointType = EJointType::JOINT_HEAD;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_HIP_LEFT:
+								JointData.JointType = EJointType::JOINT_HIP_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_HIP_RIGHT:
+								JointData.JointType = EJointType::JOINT_HIP_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_KNEE_LEFT:
+								JointData.JointType = EJointType::JOINT_KNEE_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_KNEE_RIGHT:
+								JointData.JointType = EJointType::JOINT_KNEE_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_NECK:
+								JointData.JointType = EJointType::JOINT_NECK;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_SHOULDER_LEFT:
+								JointData.JointType = EJointType::JOINT_SHOULDER_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_SHOULDER_RIGHT:
+								JointData.JointType = EJointType::JOINT_SHOULDER_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_SPINE_BASE:
+								JointData.JointType = EJointType::JOINT_SPINE_BASE;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_SPINE_MID:
+								JointData.JointType = EJointType::JOINT_SPINE_MID;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_SPINE_SHOULDER:
+								JointData.JointType = EJointType::JOINT_SPINE_SHOULDER;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_THUMB_LEFT:
+								JointData.JointType = EJointType::JOINT_THUMB_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_THUMB_RIGHT:
+								JointData.JointType = EJointType::JOINT_THUMB_RIGHT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_WRIST_LEFT:
+								JointData.JointType = EJointType::JOINT_WRIST_LEFT;
+								break;
+							case PXCPersonTrackingData::PersonJoints::JointType::JOINT_WRIST_RIGHT:
+								JointData.JointType = EJointType::JOINT_WRIST_RIGHT;
+								break;
+						}
+
+						//JointData.JointType = (uint8)j.jointType;
+						JointData.Location = FVector(j.world.x, j.world.y, j.world.z);
+						bgFrame->CurrentSkeletonData.Add(JointData);
+					}
+					
+					//
+					// struct SkeletonPoint
+					// 		{
+					// 			JointType jointType;
+					// 			pxcI32 confidenceImage;
+					// 			pxcI32 confidenceWorld;
+					// 			PXCPoint3DF32 world;
+					// 			PXCPointF32   image;
+					// 			pxcI32 reserved[10];
+					// 		};
+// 					enum JointType
+// 					{
+// 						JOINT_ANKLE_LEFT,
+// 						JOINT_ANKLE_RIGHT,
+// 						JOINT_ELBOW_LEFT,
+// 						JOINT_ELBOW_RIGHT,
+// 						JOINT_FOOT_LEFT,
+// 						JOINT_FOOT_RIGHT,
+// 						JOINT_HAND_LEFT,
+// 						JOINT_HAND_RIGHT,
+// 						JOINT_HAND_TIP_LEFT,
+// 						JOINT_HAND_TIP_RIGHT,
+// 						JOINT_HEAD,
+// 						JOINT_HIP_LEFT,
+// 						JOINT_HIP_RIGHT,
+// 						JOINT_KNEE_LEFT,
+// 						JOINT_KNEE_RIGHT,
+// 						JOINT_NECK,
+// 						JOINT_SHOULDER_LEFT,
+// 						JOINT_SHOULDER_RIGHT,	
+// 						JOINT_SPINE_BASE,
+// 						JOINT_SPINE_MID,
+// 						JOINT_SPINE_SHOULDER,
+// 						JOINT_THUMB_LEFT,
+// 						JOINT_THUMB_RIGHT,  
+// 						JOINT_WRIST_LEFT,
+// 						JOINT_WRIST_RIGHT
+// 					};
+
+					delete[] points;
+				}
+			}
+		}
+
+		if (bHandEnabled)
+		{
+			handData->Update();
+			//handData->QueryTrackedJoint(JointType label, JointData &data);
 		}
 		
 		senseManager->ReleaseFrame();
@@ -262,8 +425,9 @@ void RealSenseImpl::CameraThread()
 // If it is not already running, starts a new camera processing thread
 void RealSenseImpl::StartCamera() 
 {
+	EnableMiddleware();
+
 	if (bCameraThreadRunning == false) {
-		EnableMiddleware();
 		bCameraThreadRunning = true;
 		cameraThread = std::thread([this]() { CameraThread(); });
 	}
@@ -292,11 +456,14 @@ void RealSenseImpl::SwapFrames()
 
 void RealSenseImpl::EnableMiddleware()
 {
-	if (bScan3DEnabled) {
+	if (bScan3DEnabled && !bScan3DInitialized) {
+		bScan3DInitialized = true;
 		senseManager->Enable3DScan();
 		p3DScan = std::unique_ptr<PXC3DScan, RealSenseDeleter>(senseManager->Query3DScan());
 	}
-	if (bFaceEnabled) {
+
+	if (bFaceEnabled && !bFaceInitialized) {
+		bFaceInitialized = true;
 		senseManager->EnableFace();
 		pFace = std::unique_ptr<PXCFaceModule, RealSenseDeleter>(senseManager->QueryFace());
 		faceConfig = pFace->CreateActiveConfiguration();
@@ -327,6 +494,48 @@ void RealSenseImpl::EnableMiddleware()
 
 		faceConfig->Release();
 	}
+
+	if (bPersonEnabled && !bPersonInitialized)
+	{
+		bPersonInitialized = true;
+		senseManager->EnablePersonTracking();
+ 		pPerson = senseManager->QueryPersonTracking();
+ 		personConfig = pPerson->QueryConfiguration();
+		personConfig->SetTrackedAngles(PXCPersonTrackingConfiguration::TRACKING_ANGLES_FRONTAL);
+		personConfig->QueryTracking()->Enable();
+ 		skeletonConfig = personConfig->QuerySkeletonJoints();
+ 		skeletonConfig->SetMaxTrackedPersons(1);
+		skeletonConfig->SetTrackingArea(PXCPersonTrackingConfiguration::SkeletonJointsConfiguration::SkeletonMode::AREA_UPPER_BODY);
+		skeletonConfig->Enable();
+
+		// Tracking area ENUM
+		//  AREA_UPPER_BODY
+		//  Track all joints in the upper body.
+		//  
+		//  AREA_UPPER_BODY_ROUGH
+		//  Track four points in the upper body: head, left and right hands, and chest.
+		//  
+		//  AREA_FULL_BODY
+		//  Reserved; Track all joints in the full body.
+		//  
+		//  AREA_FULL_BODY_ROUGH
+		//  Reserved; Track four points in the full body: head, left and right hands, and chest.
+	}
+	
+	if (bHandEnabled && !bHandInitialized)
+	{
+		bHandInitialized = true;
+		senseManager->EnableHand();
+		handModule = senseManager->QueryHand();
+		handConfig = handModule->CreateActiveConfiguration();
+		handConfig->SetTrackingMode(PXCHandData::TRACKING_MODE_FULL_HAND);
+		handConfig->SetSmoothingValue(1);
+		handConfig->EnableStabilizer(true);
+		handConfig->ApplyChanges();
+		handConfig->EnableAllGestures();
+		handConfig->SubscribeGesture(this);
+		handData = handModule->CreateOutput();
+	}
 }
 
 void RealSenseImpl::EnableFeature(RealSenseFeature feature)
@@ -341,6 +550,12 @@ void RealSenseImpl::EnableFeature(RealSenseFeature feature)
 	case RealSenseFeature::HEAD_TRACKING:
 		bFaceEnabled = true;
 		return;
+	case PERSON_TRACKING:
+		bPersonEnabled = true;
+		break;
+	case HAND_TRACKING:
+		bHandEnabled = true;
+		break;
 	}
 }
 
@@ -356,6 +571,9 @@ void RealSenseImpl::DisableFeature(RealSenseFeature feature)
 	case RealSenseFeature::HEAD_TRACKING:
 		bFaceEnabled = false;
 		return;
+	case PERSON_TRACKING:
+		bPersonEnabled = false;
+		break;
 	}
 }
 
@@ -519,6 +737,22 @@ void RealSenseImpl::SaveScan(EScan3DFileFormat saveFileFormat, const FString& fi
 	scan3DFileFormat = GetPXCScanFileFormat(saveFileFormat);
 	scan3DFilename = filename;
 	bReconstructEnabled = true;
+}
+
+void PXCAPI RealSenseImpl::OnFiredGesture(const PXCHandData::GestureData & gestureData)
+{
+	FHandData data;
+	data.Name = FString(gestureData.name);
+	bgFrame->CurrentHandData.Enqueue(data);
+// 	struct GestureData 
+//     {
+//         pxcI64                timeStamp;                    /// Time-stamp in which the gesture occurred
+//         pxcUID                handId;                       /// The ID of the hand that made the gesture, if relevant and known
+//         GestureStateType      state;                          /// The state of the gesture (start, in progress, end)
+//         pxcI32                frameNumber;                  /// The number of the frame in which the gesture occurred (relevant for recorded sequences)    
+//         pxcCHAR               name[MAX_NAME_SIZE];         /// The gesture name
+//     };
+
 }
 
 // The input ImageInfo object contains the wight and height of the preview image
